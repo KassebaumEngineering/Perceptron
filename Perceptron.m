@@ -14,7 +14,7 @@
  
 (* :Context: Classes`Perceptron` *)
 
-(* :Package Version: 1.0 - $Id: Perceptron.m,v 1.9 1998/02/26 03:20:41 jak Exp $ *)
+(* :Package Version: 1.0 - $Id: Perceptron.m,v 1.10 1998/02/27 04:09:59 jak Exp $ *)
 
 (* :Mathematica Version: 3.0 *)
 
@@ -29,21 +29,26 @@
    the AddOns/Applications subdirectory of the Mathematica Installation.
  *)
 
-BeginPackage["Classes`Perceptron`",{"Classes`Classes`","Calculus`Master`","Statistics`Master`"}]
+BeginPackage[ "Classes`Perceptron`",
+  { "Classes`Classes`",
+    "Statistics`Master`",
+	"Calculus`Master`"
+  }
+]
 
 new::usage  = "new[Perceptron, numOfInputs, numOfHiddenUnits, numOfOutputs ] 
             generates a new instance of the Perceptron class with the 
 			given architecture."
 Print::usage  = "Print[ APerceptronInstance ] prints facts about the Instance."
-HiddenWeightsOf::usage  = "HiddenWeightsOf[ APerceptronInstance ] returns the 
+GetHiddenWeights::usage  = "GetHiddenWeights[ APerceptronInstance ] returns the 
             Hidden Weight Matrix for the Perceptron Instance."
-HiddenBiasesOf::usage  = "HiddenBiasesOf[ APerceptronInstance ] returns the 
+GetHiddenBiases::usage  = "GetHiddenBiases[ APerceptronInstance ] returns the 
             Hidden Bias Matrix for the Perceptron Instance."
-OutputWeightsOf::usage  = "OutputWeightsOf[ APerceptronInstance ] returns the 
+GetOutputWeights::usage  = "GetOutputWeights[ APerceptronInstance ] returns the 
             Output Weight Matrix for the Perceptron Instance."
-OutputBiasesOf::usage  = "OutputBiasesOf[ APerceptronInstance ] returns the 
+GetOutputBiases::usage  = "GetOutputBiases[ APerceptronInstance ] returns the 
             Output Bias Matrix for the Perceptron Instance."
-ParametersOf::usage  = "ParametersOf[ APerceptronInstance ] returns a list of 
+GetParameters::usage  = "GetParameters[ APerceptronInstance ] returns a list of 
             Parameter Matrices for the Perceptron Instance, in the order
 			of Hidden Weights, Hidden Biases, Output Weights, Output Biases."
 N::usage  = "N[ APerceptronInstance, inputSamples ] evaluates the network and returns
@@ -51,18 +56,17 @@ N::usage  = "N[ APerceptronInstance, inputSamples ] evaluates the network and re
 Error::usage  = "Error[ APerceptronInstance, inputSamples, DesiredOutputSamples ] 
             returns a single value which is typically the sum of squared errors made 
 			by all the network outputs."
-HiddenFunctionOf::usage  = "HiddenFunctionOf[ APerceptronInstance ] returns a 
-            symbolic representation of the function of the given Perceptron 
-			instance's hidden layer."
-OutputFunctionOf::usage  = "OutputFunctionOf[ APerceptronInstance ] returns a 
-            symbolic representation of the function of the given Perceptron 
-			instance's output layer."
-ErrorFunctionOf::usage  = "ErrorFunctionOf[ APerceptronInstance ]  returns a 
-            symbolic representation of the function of the given Perceptron 
-			instance's error function."
-PrintGradComponents::usage  = "PrintGradComponents[ APerceptronInstance ] prints the 
-            symbolic form of the major componenets of the Perceptron instance's
-			error gradient function."
+GetOutputFunction::usage  = "GetOutputFunction[ APerceptronInstance ] returns a 
+            compiled function which computes the values of the given Perceptron 
+			instance's output layer given a collection of inputs and parameters."
+GetErrorFunction::usage  = "GetErrorFunction[ APerceptronInstance ]  returns a 
+            compiled function which computes the values of the given Perceptron 
+			instance's sum of squared errors given a collection of inputs, outputs,
+			and parameters."
+GetGradientFunction::usage  = "GetGradientFunction[ APerceptronInstance ]  returns a 
+            compiled function which computes the values of the given Perceptron 
+			instance's error gradient function given a collection of inputs, outputs,
+		    and parameters."
 ErrorGradient::usage  = "ErrorGradient[ APerceptronInstance, inputSamples, DesiredOutputSamples ] 
             evaluates the network and returns a list of matrices corresponding to the
 			error gradients of each major component of the network architecture."
@@ -83,26 +87,41 @@ Class[
     {   numOfInputs,
         numOfHiddenUnits,
         numOfOutputs,
-        hidWtVals, 
-        hidBsVals,
-        outWtVals,
-        outBsVals,
-        outputlayer,
-        hiddenF,
-        outputF,
-        errorF,
-        HiddenLayerGradient,
-        HiddenWeightGradient,
-        HiddenBiasGradient,
-        OutputWeightGradient,
-        OutputBiasGradient,
-        SymbolicInput,
-        SymbolicOutput,
-        SymbolicIOVariables,
-        ScalarsToVectorsTable
+		Params,
+        OutputFn,
+        ErrorFn,
+        GradientFn,
     },
     {    {  new,  (* numOfInputs, numOfHiddenUnits, numOfOutputs *)
-            Function[
+            Function[ 
+			  Module[ 
+			    { 
+				  InputSyms,
+				  OutputSyms,
+				  HiddenUnitSyms,
+				  hiddenWeights,
+				  hiddenBiases,
+				  outputWeights,
+				  outputBiases,
+				  ParamSymbols,
+				  hiddenF,
+				  ouputF,
+				  errorF,
+				  HDTable,
+				  DsseDhiddenUnits,
+				  DsseDoutputWeights,
+				  DsseDoutputBiases,
+				  DhiddenUnitsDhiddenWeights,
+				  DhiddenUnitsDhiddenBiases,
+				  DsseDhiddenWeights,
+				  DsseDhiddenBiases,
+				  hidWtVals,
+				  hidBsVals,
+				  outWtVals,
+				  outBsVals,
+				  i,j
+				},
+				  
                 new[super]; 
              
              (* default constants and arguments *)
@@ -110,238 +129,188 @@ Class[
                 numOfHiddenUnits = #2;
                 numOfOutputs = #3;
                
-             (* Pattern Transformations from constant 0 and 1 to Vector 0 and 1 *)
-                ScalarsToVectorsTable = Dispatch[{
-                    Dot[vec_,0] :> 0, 
-                    Dot[0,vec_] :> 0, 
-                    Dot[vec_,-0] :> 0, 
-                    Dot[-0,vec_] :> 0, 
-                    Dot[vec_,1] :> vec,
-                    Dot[1,vec_] :> vec,
-                    Dot[vec_,-1] :> -vec,
-                    Dot[-1,vec_] :> -vec
-                }];
-                
              (* Initialize symbolic input/output matrices *)
-                SymbolicInput  = Array[ Unique[inVar ]&, {1,numOfInputs} ];
-                SymbolicOutput = Array[ Unique[outVar]&, {1,numOfOutputs} ];
-                SymbolicIOVariables = Flatten[ {SymbolicInput, SymbolicOutput} ];
-
-             (* Intrinsic Functions *)
-                outputlayer = H.outputWeights + outputBiases;
-                hiddenF = Tanh[ SymbolicInput.hiddenWeights + hiddenBiases ];
-                outputF = outputlayer /. H->hiddenF;
-                errorF  = (SymbolicOutput - outputlayer).Transpose[SymbolicOutput - outputlayer];
-              
-             (* Error Gradient Function Expressions *)
-                HiddenLayerGradient =
-                    ( D[ errorF, H ] 
-                        //. ScalarsToVectorsTable
-                        /. Times[num_Integer, outputWeights, expr__] -> Times[ num, Dot[ outputWeights, Transpose[ expr ]]] 
-                        /. H -> hiddenF
-                    );
-                HiddenWeightGradient = 
-                    ( D[ hiddenF, hiddenWeights ]
-                        //. ScalarsToVectorsTable
-                    );
-                HiddenBiasGradient = 
-                    ( D[ hiddenF, hiddenBiases ]
-                        //. ScalarsToVectorsTable
-                    );
-                OutputWeightGradient = 
-                    ( D[ errorF, outputWeights ] 
-                        //. ScalarsToVectorsTable
-                        /. Times[num_Integer, expr1_, expr2__] -> Times[ num, Dot[ Transpose[expr1], expr2 ]] 
-                        /. H -> hiddenF 
-                    );
-                OutputBiasGradient = 
-                    ( D[ errorF, outputBiases ] 
-                        //. ScalarsToVectorsTable
-                        /. H -> hiddenF 
-                    ); 
-
-             (* Initialize to random starting parameter values *)
-                hidWtVals = Array[ Random[ Real, {-0.1,0.1} ]&, {numOfInputs, numOfHiddenUnits}];
-                hidBsVals = Array[ Random[ Real, {-0.1,0.1} ]&, {1,numOfHiddenUnits}          ];
-                outWtVals = Array[ Random[ Real, {-0.1,0.1} ]&, {numOfHiddenUnits,numOfOutputs}];
-                outBsVals = Array[ Random[ Real, {-0.1,0.1} ]&, {1,numOfOutputs}              ];
+                InputSyms  = Array[ Unique[inVar ]&, {1,numOfInputs} ];
+                OutputSyms = Array[ Unique[outVar]&, {1,numOfOutputs} ];
                 
-           ] 
+             (* Initialize symbolic Hidden Unit outputs *)
+				HiddenUnitSyms = Array[ Unique[hidUnit]&,{1,numOfHiddenUnits}];
+				
+             (* Initialize symbolic parameter matrices *)
+			    hiddenWeights = Array[ Unique[hidwt]&, {numOfInputs,  numOfHiddenUnits} ];
+			    hiddenBiases  = Array[ Unique[hidbs]&, {1, numOfHiddenUnits}            ];
+			    outputWeights = Array[ Unique[outwt]&, {numOfHiddenUnits,numOfOutputs} ];
+			    outputBiases  = Array[ Unique[outbs]&, {1, numOfOutputs}               ];
+				ParamSymbols  = Flatten[{hiddenWeights, hiddenBiases, outputWeights, outputBiases}];
+				
+            (* Intrinsic Functions *)
+                hiddenF = Tanh[ InputSyms . hiddenWeights + hiddenBiases ];
+                outputF  = HiddenUnitSyms . outputWeights + outputBiases;
+                errorF  = (OutputSyms - outputF) . Transpose[(OutputSyms - outputF)];
+              
+				HDtable = Dispatch[ Flatten[ 
+                    Table[ HiddenUnitSyms[[1,i]] -> hiddenF[[1,i]], {i,numOfHiddenUnits}]
+				]];
+				
+            (* Compile Network Output Function *)
+				OutputFn = Compile[ 
+				    Release[ Flatten[{ InputSyms, ParamSymbols }]],
+					Release[ 
+						Return[
+						    (outputF /. HDtable)
+						]
+					]
+				];
+				
+            (* Compile Network Error Function *)
+				ErrorFn = Compile[ 
+				    Release[ Flatten[{ InputSyms, OutputSyms, ParamSymbols }]],
+					Release[ 
+						Return[
+						    (errorF /. HDtable)
+						]
+					]
+				];
+					
+            (* Error Gradient Function Expressions *)
+                DsseDhiddenUnits           = Table[ D[         errorF, HiddenUnitSyms[[1,i]] ],{i,numOfHiddenUnits}                 ];
+                DsseDoutputWeights         = Table[ D[         errorF,  outputWeights[[i,j]] ],{i,numOfHiddenUnits},{j,numOfOutputs}];
+                DsseDoutputBiases          ={Table[ D[         errorF,   outputBiases[[1,i]] ],{i, numOfOutputs}                    ]};
+				DhiddenUnitsDhiddenWeights = Table[ D[ hiddenF[[1,j]],  hiddenWeights[[i,j]] ],{i,numOfInputs},{j,numOfHiddenUnits} ];
+				DhiddenUnitsDhiddenBiases  = Table[ D[ hiddenF[[1,j]],   hiddenBiases[[1,j]] ],{j,numOfHiddenUnits}                 ];
+				
+                DsseDhiddenWeights         = Table[ DsseDhiddenUnits[[j]] DhiddenUnitsDhiddenWeights[[i,j]],{i,numOfInputs},{j,numOfHiddenUnits}];
+                DsseDhiddenBiases          ={Table[ DsseDhiddenUnits[[j]] DhiddenUnitsDhiddenBiases[[j]]   ,{j,numOfHiddenUnits}                ]};
+					
+            (* Compile Network Gradient Function *)
+				GradientFn = List[
+					Compile[ Release[ Flatten[{ InputSyms, OutputSyms, ParamSymbols }]],
+						Release[ 
+							Return[
+							    Flatten[Transpose[(DsseDhiddenWeights /. HDtable),{3,4,1,2}],2]
+							]
+						]
+					],
+					Compile[ Release[ Flatten[{ InputSyms, OutputSyms, ParamSymbols }]],
+						Release[ 
+							Return[
+							    Flatten[Transpose[( DsseDhiddenBiases /. HDtable),{3,4,1,2}],2]
+							]
+						]
+					],
+					Compile[ Release[ Flatten[{ InputSyms, OutputSyms, ParamSymbols }]],
+						Release[ 
+							Return[
+							    Flatten[Transpose[( DsseDoutputWeights /. HDtable),{3,4,1,2}],2]
+							]
+						]
+					],
+					Compile[ Release[ Flatten[{ InputSyms, OutputSyms, ParamSymbols }]],
+						Release[ 
+							Return[
+							    Flatten[Transpose[( DsseDoutputBiases /. HDtable),{3,4,1,2}],2]
+							]
+						]
+					]
+				];
+				
+			(* Initialize to random starting parameter values *)
+                hidWtVals = Array[ Random[ Statistics`NormalDistribution`NormalDistribution[0,0.1] ]&, {numOfInputs, numOfHiddenUnits}];
+                hidBsVals = Array[ Random[ Statistics`NormalDistribution`NormalDistribution[0,0.1] ]&, {1, numOfHiddenUnits}          ];
+                outWtVals = Array[ Random[ Statistics`NormalDistribution`NormalDistribution[0,0.1] ]&, {numOfHiddenUnits,numOfOutputs}];
+                outBsVals = Array[ Random[ Statistics`NormalDistribution`NormalDistribution[0,0.1] ]&, {1, numOfOutputs}              ];
+				Params = {hidWtVals, hidBsVals, outWtVals, outBsVals};
+			  ]
+			] 
          },
          { Print, (* no arguments *)
            Function[
                 Print["numOfInputs:      ", numOfInputs      ];
                 Print["numOfHiddenUnits: ", numOfHiddenUnits ];
                 Print["numOfOutputs:     ", numOfOutputs     ];
-                Print["hiddenWeights: "];   Print[ MatrixForm[ hidWtVals ]];
-                Print["hiddenBiases:  "];   Print[ MatrixForm[ hidBsVals ]];
-                Print["outputWeights: "];   Print[ MatrixForm[ outWtVals ]];
-                Print["outputBiases:  "];   Print[ MatrixForm[ outBsVals ]];
+                Print["hiddenWeights: "];   Print[ MatrixForm[ Params[[1]] ]];
+                Print["hiddenBiases:  "];   Print[ MatrixForm[ Params[[2]] ]];
+                Print["outputWeights: "];   Print[ MatrixForm[ Params[[3]] ]];
+                Print["outputBiases:  "];   Print[ MatrixForm[ Params[[4]] ]];
            ]
          },
-		 { HiddenWeightsOf, (* return hidden weight matrix *)
-		   hidWtVals&
+		 { GetHiddenWeights, (* return hidden weight matrix *)
+		   (Params[[1]])&
 		 },
-		 { HiddenBiasesOf, (* return hidden bias matrix *)
-		   hidBsVals&
+		 { GetHiddenBiases, (* return hidden bias matrix *)
+		   (Params[[2]])&
 		 },
-		 { OutputWeightsOf, (* return output weight matrix*)
-		   outWtVals&
+		 { GetOutputWeights, (* return output weight matrix*)
+		   (Params[[3]])&
 		 },
-		 { OutputBiasesOf, (* return output bias matrix *)
-		   outBsVals&
+		 { GetOutputBiases, (* return output bias matrix *)
+		   (Params[[4]])&
 		 },
-		 { ParametersOf, (* no arguments *)
-		   ({ hidWtVals, hidBsVals, outWtVals, outBsVals })&
+		 { GetParameters, (* no arguments *)
+		   Params&
 		 },
          { N,
            Function[ inputSamples,
-                Module[ {netf, weightDtable, i},
-                
-                    (* Initialize Weight Value Dispatch Table *)
-                    weightDtable = Dispatch[{   
-                        hiddenWeights -> hidWtVals, 
-                        hiddenBiases  -> hidBsVals,
-                        outputWeights -> outWtVals, 
-                        outputBiases  -> outBsVals
-                    }];
-                    
-                    netf = Compile[ 
-                        Release[ Flatten[ SymbolicInput ]],
-                        Release[ outputF //. ScalarsToVectorsTable /. weightDtable ]
-                    ];
-                    
+                Module[ {i},
                     Return[ 
                         Table[
-                            Apply[ netf, inputSamples[[i]] ][[1]],
+                            Apply[ 
+							    OutputFn, 
+								Flatten[{inputSamples[[i]], Params }] 
+						    ] [[1]],
                             {i, Length[ inputSamples ]}
                         ]
-                    ];
+                    ]
                 ]
             ]
          },
          { Error,
            Function[ {inputSamples,outputSamples},
-                Module[ {errfn, weightDtable, i},
-                
-                    (* Initialize Weight Value Dispatch Table *)
-                    weightDtable = Dispatch[{   
-                        hiddenWeights -> hidWtVals, 
-                        hiddenBiases  -> hidBsVals,
-                        outputWeights -> outWtVals, 
-                        outputBiases  -> outBsVals
-                    }];
-                    errfn = Compile[ 
-                        Release[ SymbolicIOVariables ],
-                        Release[ errorF /. H->hiddenF //. ScalarsToVectorsTable /. weightDtable ] 
-                    ];
-                    
+                Module[ {i},
                     Return[ 
                         Sum[
-                            Apply[ errfn, Flatten[ {inputSamples[[i]], outputSamples[[i]]} ]][[1]],
+                            Apply[ 
+							    ErrorFn, 
+								Flatten[{inputSamples[[i]], outputSamples[[i]], Params}]
+							][[1]],
                             {i, Length[inputSamples]}
-                        ][[1,1,1]]
-                    ];
+                        ][[1]]
+                    ]
                 ]
            ]
          },
-         { HiddenFunctionOf,
-           hiddenF&
+         { GetOutputFunction,
+           OutputFn&
          },
-         { OutputFunctionOf,
-           outputF&
+         { GetErrorFunction,
+           ErrorFn&
          },
-         { ErrorFunctionOf,
-           errorF&
-         },
-         { PrintGradComponents, (* no arguments *)
-           Function[
-               Module[ {weightDtable},
-                    (* Initialize Weight Value Dispatch Table *)
-                    weightDtable = Dispatch[{   
-                        hiddenWeights -> hidWtVals, 
-                        hiddenBiases  -> hidBsVals,
-                        outputWeights -> outWtVals, 
-                        outputBiases  -> outBsVals
-                    }];
-                    Print[ "dE/dH  = ", HiddenLayerGradient /. weightDtable ];
-                    Print[ "dH/dWh = ", HiddenWeightGradient /. weightDtable ];
-                    Print[ "dH/dBh = ", HiddenBiasGradient /. weightDtable ];
-                    Print[ "dE/dWy = ", OutputWeightGradient /. weightDtable ];
-                    Print[ "dE/dBy = ", OutputBiasGradient /. weightDtable ];
-               ]
-           ]
+         { GetGradientFunction,
+           GradientFn&
          },
          { ErrorGradient,  (* Weight Gradient *)
            Function[ {inputSamples, outputSamples},
-               Module[ {gradf, weightDtable, i, j},
-                    (* Initialize Weight Value Dispatch Table *)
-                    weightDtable = Dispatch[{   
-                        hiddenWeights -> hidWtVals, 
-                        hiddenBiases  -> hidBsVals,
-                        outputWeights -> outWtVals, 
-                        outputBiases  -> outBsVals
-                    }];
-                    
-                   (* Gradient Function Table *)
-                    gradf = List[ 
-                        Compile[
-                            Release[ SymbolicIOVariables ],
-                            Release[ 
-                              Module[ {dEdH, dHdWh},
-                                dEdH = (HiddenLayerGradient /. weightDtable)[[1,1]] ;
-                                dHdWh = Transpose[ (HiddenWeightGradient  /. weightDtable)[[1]] ][[1]];
-                                Return[
-                                    Sum[
-                                        dEdH[[i,1]] dHdWh,
-                                        {i, Length[ dEdH ]}
-                                    ]
-                                ]
-                              ]
-                            ]
-                        ],
-                        Compile[
-                            Release[ SymbolicIOVariables ],
-                            Release[
-                              Module[ {dEdH, dHdWh},
-                                dEdH = (HiddenLayerGradient /. weightDtable)[[1,1]];
-                                dHdBh = (HiddenBiasGradient  /. weightDtable);
-                                Return[
-                                    Sum[
-                                        dEdH[[i,1]] dHdBh,
-                                        {i, Length[ dEdH ]}
-                                    ]
-                                ]
-                              ]
-                            ]
-                        ],
-                        Compile[
-                            Release[ SymbolicIOVariables ],
-                            Release[ (OutputWeightGradient /. weightDtable)[[1,1]] ]
-                        ],
-                        Compile[
-                            Release[ SymbolicIOVariables ],
-                            Release[ (OutputBiasGradient /. weightDtable)[[1,1]] ]
-                        ]
-                    ];
-                    
+               Module[ {i, j},
                   (* Calculate and Return Gradient Sum for all input/output samples *)
                     Return[
-                      Sum[ 
-                        Table[ 
-                            Apply[ gradf[[i]], Flatten[ {inputSamples[[j]], outputSamples[[j]]} ]],
-                            {i, Length[gradf] }
-                        ],
-                        {j, Length[ outputSamples]}
-                      ]
-                    ];
+                        Sum[ 
+                            Table[ 
+                                Apply[ 
+							        GradientFn[[i]], 
+								    Flatten[{inputSamples[[j]], outputSamples[[j]], Params}]
+							    ],
+                                {i, Length[GradientFn] }
+                            ],
+                            {j, Length[ outputSamples]}
+                        ]
+                    ]
                 ]
            ]
          },
          { Train,  (* Via Conjugate Gradient Descent *)
            Function[ {inputSamples,outputSamples,trainingEpochs},
                Module[
-                   { P0, P1, G0, G1, W0, W1, Beta, Rtn, RtnErrTmp, ErrMin, LearningRate, weightDtable, i  },
+                   { P0, P1, G0, G1, W0, W1, Beta, Rtn, RtnErrTmp, ErrMin, LearningRate, weightDtable, i, j},
                    Rtn = List[ Error[self,inputSamples,outputSamples] ];
                    Print[ "Initial Error = ", Rtn[[1]] ];
                    Print[ "Training Epochs and Results:" ];
@@ -357,7 +326,7 @@ Class[
                 (* Initialize Gradients and Directions *)
                    G1 = ErrorGradient[ self, inputSamples, outputSamples ];
                    P1 = -G1;
-                   W1 = { hidWtVals, hidBsVals, outWtVals, outBsVals };
+                   W1 = Params;
 
                    For[ i=1, i<=trainingEpochs, i=i+1,
                      (* Prepare for coming iteration *)
@@ -366,48 +335,26 @@ Class[
                        W0 =. ; W0 = W1;
                        
                      (* Choose Learning Rate *)
-                       ErrMin = Module[ {f ,ef, dispatchTable},
-                            dispatchTable = Dispatch[{  
-                                hiddenWeights  -> (W0[[1]] + Z P0[[1]]), 
-                                hiddenBiases   -> (W0[[2]] + Z P0[[2]]), 
-                                outputWeights  -> (W0[[3]] + Z P0[[3]]), 
-                                outputBiases   -> (W0[[4]] + Z P0[[4]])
-                            }];
-
-                            ef = Compile[ 
-                                Release[ Append[ SymbolicIOVariables, X ] ],
-                                Release[
-                                    ( errorF 
-                                        /.  H-> hiddenF 
-                                        //. ScalarsToVectorsTable 
-                                        /.  dispatchTable 
-                                        /.  Z -> X 
-                                    )
-                                ]
-                            ];
-                             
+                       ErrMin = Module[ {f, j},
                             f = Function[ x,
                                 Sum[
                                     Apply[ 
-                                        ef,
-                                        Flatten[ {inputSamples[[j]], outputSamples[[j]], x} ]
-                                    ][[1,1,1,1]],
+                                        ErrorFn,
+                                        Flatten[ {inputSamples[[j]], outputSamples[[j]], (W0 + x P0)} ]
+                                    ][[1]],
                                     {j, Length[outputSamples]}
-                                ]
+                                ][[1]]
                             ];
-                            FindMinimum[ f[ LearningRate ], {LearningRate, 0.1, 0.2}]
+                            FindMinimum[ f[ LearningRate ], {LearningRate, {0.1, 0.2}}]
                        ];
                        
                      (* Update Weights *)
-                       W1 = W0 + LearningRate P0 /.ErrMin[[2]];
+                       W1 = W0 + LearningRate P0 /. ErrMin[[2]];
                        
-                      (* Save Weight Values Found *)
-                        hidWtVals = . ; hidWtVals = W1[[1]];
-                        hidBsVals = . ; hidBsVals = W1[[2]];
-                        outWtVals = . ; outWtVals = W1[[3]];
-                        outBsVals = . ; outBsVals = W1[[4]];
-                       
-                      (* Report Progress and Construct Return List *)       
+                     (* Save Weight Values Found *)
+					   Params =. ; Params = W1;
+
+                     (* Report Progress and Construct Return List *)       
                        RtnErrTmp = ErrMin[[1]]; 
                        Print[ i, ": ", RtnErrTmp, ", ErrMin = ", ErrMin ];
                        AppendTo[ Rtn,  RtnErrTmp ];
@@ -441,10 +388,9 @@ Protect[
 	ParametersOf,
 	N,
 	Error,
-	HiddenFunctionOf,
-	OutputFunctionOf,
-	ErrorFunctionOf,
-	PrintGradComponents,
+	GetOutputFunction,
+	GetErrorFunction,
+	GetErrorGradientFunction,
 	ErrorGradient,
 	Train
 ]
@@ -453,6 +399,9 @@ EndPackage[]
 
 (* :History:
    $Log: Perceptron.m,v $
+   Revision 1.10  1998/02/27 04:09:59  jak
+   A Major Re-write - maybe it'll converge now. -jak
+
    Revision 1.9  1998/02/26 03:20:41  jak
    I misspelled 'ErrorGradient'. -jak
 
