@@ -14,7 +14,7 @@
  
 (* :Context: Classes`Perceptron` *)
 
-(* :Package Version: 1.0 - $Id: Perceptron.m,v 1.8 1998/02/26 02:52:34 jak Exp $ *)
+(* :Package Version: 1.0 - $Id: Perceptron.m,v 1.9 1998/02/26 03:20:41 jak Exp $ *)
 
 (* :Mathematica Version: 3.0 *)
 
@@ -413,7 +413,7 @@ Class[
                        AppendTo[ Rtn,  RtnErrTmp ];
                        
                      (* Find new Gradient *)
-                       G1 = Grad[ self, inputSamples, outputSamples ];
+                       G1 = ErrorGradient[ self, inputSamples, outputSamples ];
                        
                      (* Find Beta by Fletcher-Reeves Formula *)
                        Beta = (Flatten[G1].Flatten[G1]) / (Flatten[G0].Flatten[G0]);
@@ -453,6 +453,9 @@ EndPackage[]
 
 (* :History:
    $Log: Perceptron.m,v $
+   Revision 1.9  1998/02/26 03:20:41  jak
+   I misspelled 'ErrorGradient'. -jak
+
    Revision 1.8  1998/02/26 02:52:34  jak
    OK ... I had to change the context of the Classes.m for where I
    put it in the Mathematica System to Classes`Classes`. -jak
