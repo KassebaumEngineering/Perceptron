@@ -14,7 +14,7 @@
  
 (* :Context: Classes`Perceptron` *)
 
-(* :Package Version: 1.0 - $Id: Perceptron.m,v 1.6 1998/02/26 02:30:23 jak Exp $ *)
+(* :Package Version: 1.0 - $Id: Perceptron.m,v 1.7 1998/02/26 02:34:55 jak Exp $ *)
 
 (* :Mathematica Version: 3.0 *)
 
@@ -22,6 +22,9 @@
 
 (* :History:
    $Log: Perceptron.m,v $
+   Revision 1.7  1998/02/26 02:34:55  jak
+   Made a change so it could find "Classes.m". -jak
+
    Revision 1.6  1998/02/26 02:30:23  jak
    Fixed a typo, and removed unneeded old definitions. -jak
 
@@ -51,23 +54,23 @@
    with the other installed code.
  *)
 
-BeginPackage["Classes`Perceptron`",{"Classes`","Calculus`Master`","Statistics`Master`"}]
+BeginPackage["Classes`Perceptron`",{"Classes`Classes`","Calculus`Master`","Statistics`Master`"}]
 
 new::usage  = "new[Perceptron, numOfInputs, numOfHiddenUnits, numOfOutputs ] 
-               generates a new instance of the Perceptron class with the 
-			   given architecture."
+            generates a new instance of the Perceptron class with the 
+			given architecture."
 Print::usage  = "Print[ APerceptronInstance ] prints facts about the Instance."
 HiddenWeightsOf::usage  = "HiddenWeightsOf[ APerceptronInstance ] returns the 
-                Hidden Weight Matrix for the Perceptron Instance."
+            Hidden Weight Matrix for the Perceptron Instance."
 HiddenBiasesOf::usage  = "HiddenBiasesOf[ APerceptronInstance ] returns the 
-                Hidden Bias Matrix for the Perceptron Instance."
+            Hidden Bias Matrix for the Perceptron Instance."
 OutputWeightsOf::usage  = "OutputWeightsOf[ APerceptronInstance ] returns the 
-                Output Weight Matrix for the Perceptron Instance."
+            Output Weight Matrix for the Perceptron Instance."
 OutputBiasesOf::usage  = "OutputBiasesOf[ APerceptronInstance ] returns the 
-                Output Bias Matrix for the Perceptron Instance."
+            Output Bias Matrix for the Perceptron Instance."
 ParametersOf::usage  = "ParametersOf[ APerceptronInstance ] returns a list of 
-                Parameter Matrices for the Perceptron Instance, in the order
-				of Hidden Weights, Hidden Biases, Output Weights, Output Biases."
+            Parameter Matrices for the Perceptron Instance, in the order
+			of Hidden Weights, Hidden Biases, Output Weights, Output Biases."
 N::usage  = "N[ APerceptronInstance, inputSamples ] evaluates the network and returns
             a matix of output samples corresponding to the given input samples. "
 Error::usage  = "Error[ APerceptronInstance, inputSamples, DesiredOutputSamples ] 
