@@ -12,9 +12,9 @@
    using an object oriented approach in Mathematica.  
  *)
  
-(* :Context: Classes` *)
+(* :Context: Classes`Perceptron` *)
 
-(* :Package Version: 1.0 - $Id: Perceptron.m,v 1.5 1998/02/26 02:26:02 jak Exp $ *)
+(* :Package Version: 1.0 - $Id: Perceptron.m,v 1.6 1998/02/26 02:30:23 jak Exp $ *)
 
 (* :Mathematica Version: 3.0 *)
 
@@ -22,6 +22,9 @@
 
 (* :History:
    $Log: Perceptron.m,v $
+   Revision 1.6  1998/02/26 02:30:23  jak
+   Fixed a typo, and removed unneeded old definitions. -jak
+
    Revision 1.5  1998/02/26 02:26:02  jak
    I made the Perceptron class a Package.  -jak
 
@@ -47,10 +50,6 @@
    the MathSource repository to be placed in the ObjectOriented Directory
    with the other installed code.
  *)
-
-(* Needs["Classes`"]; *)
-(* Needs["Calculus`Master`"]; *)
-(* Needs["Statistics`Master`"]; *)
 
 BeginPackage["Classes`Perceptron`",{"Classes`","Calculus`Master`","Statistics`Master`"}]
 
