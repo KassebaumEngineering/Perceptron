@@ -10,7 +10,7 @@
    using an object oriented approach in Mathematica.  
  *)
  
-(* :Package Version: 1.0 - $Id: Perceptron.m,v 1.1 1998/02/25 07:41:26 jak Exp $ *)
+(* :Package Version: 1.0 - $Id: Perceptron.m,v 1.1.1.1 1998/02/25 07:41:26 jak Exp $ *)
 
 (* :Mathematica Version: 3.0 *)
 
@@ -18,8 +18,8 @@
 
 (* :History:
    $Log: Perceptron.m,v $
-   Revision 1.1  1998/02/25 07:41:26  jak
-   Initial revision
+   Revision 1.1.1.1  1998/02/25 07:41:26  jak
+   Initial import of the fully functional Mathematica Perceptron Class. -jak
 
  *)
  
