@@ -10,7 +10,7 @@
    using an object oriented approach in Mathematica.  
  *)
  
-(* :Package Version: 1.0 - $Id: Perceptron.m,v 1.2 1998/02/25 07:47:21 jak Exp $ *)
+(* :Package Version: 1.0 - $Id: Perceptron.m,v 1.3 1998/02/25 08:08:47 jak Exp $ *)
 
 (* :Mathematica Version: 3.0 *)
 
@@ -18,6 +18,9 @@
 
 (* :History:
    $Log: Perceptron.m,v $
+   Revision 1.3  1998/02/25 08:08:47  jak
+   Changed a print statement and cleaned up the test file. -jak
+
    Revision 1.2  1998/02/25 07:47:21  jak
    Changed Tabs to spaces. -jak
 
@@ -291,7 +294,7 @@ Class[
                    { P0, P1, G0, G1, W0, W1, Beta, Rtn, RtnErrTmp, ErrMin, LearningRate, weightDtable, i  },
                    Rtn = List[ Error[self,inputSamples,outputSamples] ];
                    Print[ "Initial Error = ", Rtn[[1]] ];
-                   Print[ "Progress:" ];
+                   Print[ "Training Epochs and Results:" ];
 
                 (* Initialize Weight Value Dispatch Table *)
                     weightDtable = Dispatch[{   
