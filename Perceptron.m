@@ -3,14 +3,18 @@
 
 (* :Title: Single Layer Perceptron Neural Network Class *)
 
-(* :Authors: John A. Kassebaum *)
+(* :Name: Classes`Perceptron` *)
+
+(* :Author: John A. Kassebaum, January 1998. *)
 
 (* :Summary:
    This class implements a simple perceptron neural network type
    using an object oriented approach in Mathematica.  
  *)
  
-(* :Package Version: 1.0 - $Id: Perceptron.m,v 1.4 1998/02/25 22:49:39 jak Exp $ *)
+(* :Context: Classes` *)
+
+(* :Package Version: 1.0 - $Id: Perceptron.m,v 1.5 1998/02/26 02:26:02 jak Exp $ *)
 
 (* :Mathematica Version: 3.0 *)
 
@@ -18,6 +22,9 @@
 
 (* :History:
    $Log: Perceptron.m,v $
+   Revision 1.5  1998/02/26 02:26:02  jak
+   I made the Perceptron class a Package.  -jak
+
    Revision 1.4  1998/02/25 22:49:39  jak
    Added some output functions for the netwowrk paremeters. -jak
 
@@ -41,9 +48,57 @@
    with the other installed code.
  *)
 
-<< ObjectOriented/Classes.m
-<< Calculus/VectorCalculus.m
-<< Statistics/Master.m
+(* Needs["Classes`"]; *)
+(* Needs["Calculus`Master`"]; *)
+(* Needs["Statistics`Master`"]; *)
+
+BeginPackage["Classes`Perceptron`",{"Classes`","Calculus`Master`","Statistics`Master`"}]
+
+new::usage  = "new[Perceptron, numOfInputs, numOfHiddenUnits, numOfOutputs ] 
+               generates a new instance of the Perceptron class with the 
+			   given architecture."
+Print::usage  = "Print[ APerceptronInstance ] prints facts about the Instance."
+HiddenWeightsOf::usage  = "HiddenWeightsOf[ APerceptronInstance ] returns the 
+                Hidden Weight Matrix for the Perceptron Instance."
+HiddenBiasesOf::usage  = "HiddenBiasesOf[ APerceptronInstance ] returns the 
+                Hidden Bias Matrix for the Perceptron Instance."
+OutputWeightsOf::usage  = "OutputWeightsOf[ APerceptronInstance ] returns the 
+                Output Weight Matrix for the Perceptron Instance."
+OutputBiasesOf::usage  = "OutputBiasesOf[ APerceptronInstance ] returns the 
+                Output Bias Matrix for the Perceptron Instance."
+ParametersOf::usage  = "ParametersOf[ APerceptronInstance ] returns a list of 
+                Parameter Matrices for the Perceptron Instance, in the order
+				of Hidden Weights, Hidden Biases, Output Weights, Output Biases."
+N::usage  = "N[ APerceptronInstance, inputSamples ] evaluates the network and returns
+            a matix of output samples corresponding to the given input samples. "
+Error::usage  = "Error[ APerceptronInstance, inputSamples, DesiredOutputSamples ] 
+            returns a single value which is typically the sum of squared errors made 
+			by all the network outputs."
+HiddenFunctionOf::usage  = "HiddenFunctionOf[ APerceptronInstance ] returns a 
+            symbolic representation of the function of the given Perceptron 
+			instance's hidden layer."
+OutputFunctionOf::usage  = "OutputFunctionOf[ APerceptronInstance ] returns a 
+            symbolic representation of the function of the given Perceptron 
+			instance's output layer."
+ErrorFunctionOf::usage  = "ErrorFunctionOf[ APerceptronInstance ]  returns a 
+            symbolic representation of the function of the given Perceptron 
+			instance's error function."
+PrintGradComponents::usage  = "PrintGradComponents[ APerceptronInstance ] prints the 
+            symbolic form of the major componenets of the Perceptron instance's
+			error gradient function."
+ErrorGradient::usage  = "ErrorGradient[ APerceptronInstance, inputSamples, DesiredOutputSamples ] 
+            evaluates the network and returns a list of matrices corresponding to the
+			error gradients of each major component of the network architecture."
+Train::usage  = "Train[ APerceptronInstance, inputSamples, DesiredOutputSamples ] uses
+            the Conjugate Gradient Descent algorithm to iteratively improve the perfomance
+			of the Neural Network."
+
+Perceptron::usage = "Perceptron is a single hidden-layer neural network
+            which uses Tanh functions in the hidden layer and linear 
+			units in the output layer. Use 'new' to create one. 
+			Perceptron is a sublass of Object."
+
+Begin["`Private`"]
 
 Class[ 
     Perceptron,
@@ -147,19 +202,19 @@ Class[
                 Print["outputBiases:  "];   Print[ MatrixForm[ outBsVals ]];
            ]
          },
-		 { HiddenWeights, (* return hidden weight matrix *)
+		 { HiddenWeightsOf, (* return hidden weight matrix *)
 		   hidWtVals&
 		 },
-		 { HiddenBiases, (* return hidden bias matrix *)
+		 { HiddenBiasesOf, (* return hidden bias matrix *)
 		   hidBsVals&
 		 },
-		 { OutputWeights, (* return output weight matrix*)
+		 { OutputWeightsOf, (* return output weight matrix*)
 		   outWtVals&
 		 },
-		 { OutputBiases, (* return output bias matrix *)
+		 { OutputBiasesOf, (* return output bias matrix *)
 		   outBsVals&
 		 },
-		 { Parameters, (* no arguments *)
+		 { ParametersOf, (* no arguments *)
 		   ({ hidWtVals, hidBsVals, outWtVals, outBsVals })&
 		 },
          { N,
@@ -240,7 +295,7 @@ Class[
                ]
            ]
          },
-         { Grad,  (* Weight Gradient *)
+         { ErrorGradient,  (* Weight Gradient *)
            Function[ {inputSamples, outputSamples},
                Module[ {gradf, weightDtable, i, j},
                     (* Initialize Weight Value Dispatch Table *)
@@ -323,7 +378,7 @@ Class[
                     }];
                 
                 (* Initialize Gradients and Directions *)
-                   G1 = Grad[ self, inputSamples, outputSamples ];
+                   G1 = ErrorGradient[ self, inputSamples, outputSamples ];
                    P1 = -G1;
                    W1 = { hidWtVals, hidBsVals, outWtVals, outBsVals };
 
@@ -376,7 +431,7 @@ Class[
                         outBsVals = . ; outBsVals = W1[[4]];
                        
                       (* Report Progress and Construct Return List *)       
-                       RtnErrTmp = ErrMin[[1]]; (* Error[self,inputSamples,outputSamples]; *)
+                       RtnErrTmp = ErrMin[[1]]; 
                        Print[ i, ": ", RtnErrTmp, ", ErrMin = ", ErrMin ];
                        AppendTo[ Rtn,  RtnErrTmp ];
                        
@@ -395,4 +450,26 @@ Class[
            ]
          }
     }
-];
+]
+
+End[]
+
+Protect[ 
+    new, 
+	Print,
+	HiddenWeightsOf,
+	HiddenBiasesOf,
+	OutputWeightsOf,
+	OutputBiasesOf,
+	ParametersOf,
+	N,
+	Error,
+	HiddenFunctionOf,
+	OutputFunctionOf,
+	ErrorFunctionOf,
+	PrintGradComponents,
+	ErrorGradient,
+	Train
+]
+
+EndPackage[]
