@@ -1,6 +1,6 @@
 (* :Title: Object-oriented Programming *)
 
-(* :Name: Classes` *)
+(* :Name: Classes`Classes` *)
 
 (* :Author: Roman E. Maeder, June 1993. *)
 
@@ -8,7 +8,7 @@
 This packages provides the support for object-oriented programming in Mathematica.
 *)
 
-(* :Context: Classes` *)
+(* :Context: Classes`Classes` *)
 
 (* :Package Version: 1.1 *)
 
@@ -52,7 +52,7 @@ This packages provides the support for object-oriented programming in Mathematic
 
 *)
 
-BeginPackage["Classes`"]
+BeginPackage["Classes`Classes`"]
 
 Class::usage = "Class[class, superclass, variables, methods] defines
 	a new class as a subclass of superclass.

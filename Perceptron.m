@@ -14,44 +14,19 @@
  
 (* :Context: Classes`Perceptron` *)
 
-(* :Package Version: 1.0 - $Id: Perceptron.m,v 1.7 1998/02/26 02:34:55 jak Exp $ *)
+(* :Package Version: 1.0 - $Id: Perceptron.m,v 1.8 1998/02/26 02:52:34 jak Exp $ *)
 
 (* :Mathematica Version: 3.0 *)
 
 (* :Copyright: Copyright 1998, John Kassebaum *)
 
-(* :History:
-   $Log: Perceptron.m,v $
-   Revision 1.7  1998/02/26 02:34:55  jak
-   Made a change so it could find "Classes.m". -jak
-
-   Revision 1.6  1998/02/26 02:30:23  jak
-   Fixed a typo, and removed unneeded old definitions. -jak
-
-   Revision 1.5  1998/02/26 02:26:02  jak
-   I made the Perceptron class a Package.  -jak
-
-   Revision 1.4  1998/02/25 22:49:39  jak
-   Added some output functions for the netwowrk paremeters. -jak
-
-   Revision 1.3  1998/02/25 08:08:47  jak
-   Changed a print statement and cleaned up the test file. -jak
-
-   Revision 1.2  1998/02/25 07:47:21  jak
-   Changed Tabs to spaces. -jak
-
-   Revision 1.1.1.1  1998/02/25 07:41:26  jak
-   Initial import of the fully functional Mathematica Perceptron Class. -jak
-
- *)
- 
 (* :Keywords:
    Neural Network, Perceptron, Conjugate Gradient
  *)
  
 (* :Warning: This is not a standard package!  It requires "Classes.m" from
-   the MathSource repository to be placed in the ObjectOriented Directory
-   with the other installed code.
+   the MathSource repository to be placed in a Directory called Classes in
+   the AddOns/Applications subdirectory of the Mathematica Installation.
  *)
 
 BeginPackage["Classes`Perceptron`",{"Classes`Classes`","Calculus`Master`","Statistics`Master`"}]
@@ -475,3 +450,33 @@ Protect[
 ]
 
 EndPackage[]
+
+(* :History:
+   $Log: Perceptron.m,v $
+   Revision 1.8  1998/02/26 02:52:34  jak
+   OK ... I had to change the context of the Classes.m for where I
+   put it in the Mathematica System to Classes`Classes`. -jak
+
+   Revision 1.7  1998/02/26 02:34:55  jak
+   Made a change so it could find "Classes.m". -jak
+
+   Revision 1.6  1998/02/26 02:30:23  jak
+   Fixed a typo, and removed unneeded old definitions. -jak
+
+   Revision 1.5  1998/02/26 02:26:02  jak
+   I made the Perceptron class a Package.  -jak
+
+   Revision 1.4  1998/02/25 22:49:39  jak
+   Added some output functions for the netwowrk paremeters. -jak
+
+   Revision 1.3  1998/02/25 08:08:47  jak
+   Changed a print statement and cleaned up the test file. -jak
+
+   Revision 1.2  1998/02/25 07:47:21  jak
+   Changed Tabs to spaces. -jak
+
+   Revision 1.1.1.1  1998/02/25 07:41:26  jak
+   Initial import of the fully functional Mathematica Perceptron Class. -jak
+
+ *)
+ 
