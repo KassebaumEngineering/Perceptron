@@ -10,7 +10,7 @@
    using an object oriented approach in Mathematica.  
  *)
  
-(* :Package Version: 1.0 - $Id: Perceptron.m,v 1.3 1998/02/25 08:08:47 jak Exp $ *)
+(* :Package Version: 1.0 - $Id: Perceptron.m,v 1.4 1998/02/25 22:49:39 jak Exp $ *)
 
 (* :Mathematica Version: 3.0 *)
 
@@ -18,6 +18,9 @@
 
 (* :History:
    $Log: Perceptron.m,v $
+   Revision 1.4  1998/02/25 22:49:39  jak
+   Added some output functions for the netwowrk paremeters. -jak
+
    Revision 1.3  1998/02/25 08:08:47  jak
    Changed a print statement and cleaned up the test file. -jak
 
@@ -144,6 +147,21 @@ Class[
                 Print["outputBiases:  "];   Print[ MatrixForm[ outBsVals ]];
            ]
          },
+		 { HiddenWeights, (* return hidden weight matrix *)
+		   hidWtVals&
+		 },
+		 { HiddenBiases, (* return hidden bias matrix *)
+		   hidBsVals&
+		 },
+		 { OutputWeights, (* return output weight matrix*)
+		   outWtVals&
+		 },
+		 { OutputBiases, (* return output bias matrix *)
+		   outBsVals&
+		 },
+		 { Parameters, (* no arguments *)
+		   ({ hidWtVals, hidBsVals, outWtVals, outBsVals })&
+		 },
          { N,
            Function[ inputSamples,
                 Module[ {netf, weightDtable, i},
